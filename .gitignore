@@ -2,3 +2,6 @@
 *DS_Store
 /target
 /build
+cobertura-cov-report-ant/
+cobertura-xml-reports-ant/
+cobertura.ser

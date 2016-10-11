@@ -8,16 +8,37 @@
 	<property name="test.src.dir" value="src/test/java" />
 	<property name="test.build.dir" value="build/test" />
 	
+	<property name="lib.dir" value="lib" />
+	
+	<property name="instrumented.dir" value="build/instrumented" />
+	
+	<property name="cobertura.dir" value="/Users/gaozebao/Dropbox/tools/cobertura-2.1.1" />
+	<property name="reports.xml.dir" value="cobertura-xml-reports-ant" />
+	<property name="coveragereport.dir" value="cobertura-cov-report-ant" />
+	
 	<path id="classpath.test">
 	    <pathelement location="lib/junit-4.10.jar"/>
 	    <pathelement location="${main.build.dir}"/>
-	  </path>
+	</path>
+	
+	<path id="cobertura.classpath">
+	    <fileset dir="${cobertura.dir}">
+	        <include name="cobertura-2.1.1.jar" />
+	        <include name="lib/**/*.jar" />
+	    </fileset>
+	</path>
+
+	<taskdef classpathref="cobertura.classpath" resource="tasks.properties" />
 	
 	<target name="init">
 			<delete dir="${main.build.dir}" failonerror="false" />
 			<delete dir="${test.build.dir}" failonerror="false" />
+			<delete dir="${reports.xml.dir}" failonerror="false" />
+			<delete dir="${coveragereport.dir}" failonerror="false" />
 			<mkdir dir="${main.build.dir}" />
 			<mkdir dir="${test.build.dir}" />
+			<mkdir dir="${reports.xml.dir}" />
+			<mkdir dir="${coveragereport.dir}" />
 		</target>
 	
 	<target name="compile" depends="init" description="compile the source ">
@@ -30,7 +51,72 @@
 	    </javac>
 	</target>
 	
-	<target name="test" depends="test-compile">
+	<target name="instrument" depends="test-compile">
+		<cobertura-instrument  todir="${instrumented.dir}">
+		    <ignore regex="org.apache.log4j.*" />
+		    <fileset dir="${main.build.dir}">
+		        <include name="**/*.class" />
+		        <!--exclude name="**/*Test.class" /-->
+		    </fileset>
+		    <fileset dir="${test.build.dir}">
+		        <include name="**/*.class" />
+		        <!--exclude name="**/*Test.class" /-->
+		    </fileset>
+		    <!--fileset dir="${lib.dir}">
+		        <include name="*.jar" />
+		    </fileset-->
+		</cobertura-instrument>
+	</target>
+	
+	<target name="test" depends="instrument">
+		<junit fork="yes" dir="${basedir}" failureProperty="test.failed">
+			<!--
+				Specify the name of the coverage data file to use.
+				The value specified below is the default.
+			-->
+			<sysproperty key="net.sourceforge.cobertura.datafile"
+				file="${coveragereport.dir}/cobertura.ser" />
+	
+			<!--
+				Note the classpath order: instrumented classes are before the
+				original (uninstrumented) classes.  This is important.
+			-->
+			<classpath location="${instrumented.dir}" />
+			<classpath location="${main.build.dir}" />
+			<classpath location="${test.build.dir}" />
+	
+			<!--
+				The instrumented classes reference classes used by the
+				Cobertura runtime, so Cobertura and its dependencies
+				must be on your classpath.
+			-->
+			<classpath refid="cobertura.classpath" />
+	
+			<formatter type="xml" />
+			<test name="${testcase}" todir="${reports.xml.dir}" if="testcase" />
+			<batchtest todir="${reports.xml.dir}" unless="testcase">
+				<fileset dir="${test.src.dir}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+	
+	<!--cobertura-report format="xml" destdir="${coveragereport.dir}" srcdir="${main.src.dir}" /-->
+	
+	<target name="report" depends="test">
+		<cobertura-report format="xml" destdir="${coveragereport.dir}" >
+			<fileset dir="${main.src.dir}">
+				<include name="**/*.java" />
+			</fileset>
+	
+			<fileset dir="${test.src.dir}">
+				<include name="**/*.java" />
+			</fileset>
+		</cobertura-report>
+	</target>
+	
+	<!--target name="test" depends="test-compile">
 	    <junit printsummary="on" haltonfailure="yes" fork="true">
 	        <classpath>
 	          <path refid="classpath.test"/>
@@ -41,9 +127,9 @@
 	            <fileset dir="${test.src.dir}" includes="**/*Test.java" />
 	        </batchtest>
 	    </junit>
-	  </target>
+	  </target-->
 	
-	<target name="dist" depends="test"/>
+	<target name="dist" depends="report"/>
 
 	<target name="clean">
 		<delete dir="${build.dir}" failonerror="false" />
