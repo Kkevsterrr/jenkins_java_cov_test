@@ -12,7 +12,7 @@
 	
 	<property name="instrumented.dir" value="build/instrumented" />
 	
-	<property name="cobertura.dir" value="/Users/gaozebao/Dropbox/tools/cobertura-2.1.1" />
+	<property name="cobertura.dir" value="${lib.dir}/cobertura-2.1.1" />
 	<property name="reports.xml.dir" value="cobertura-xml-reports-ant" />
 	<property name="coveragereport.dir" value="cobertura-cov-report-ant" />
 	
