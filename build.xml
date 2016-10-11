@@ -56,11 +56,11 @@
 		    <ignore regex="org.apache.log4j.*" />
 		    <fileset dir="${main.build.dir}">
 		        <include name="**/*.class" />
-		        <!--exclude name="**/*Test.class" /-->
+		        <exclude name="**/*Test.class" />
 		    </fileset>
 		    <fileset dir="${test.build.dir}">
 		        <include name="**/*.class" />
-		        <!--exclude name="**/*Test.class" /-->
+		        <exclude name="**/*Test.class" />
 		    </fileset>
 		    <!--fileset dir="${lib.dir}">
 		        <include name="*.jar" />
